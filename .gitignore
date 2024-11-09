@@ -1,0 +1,5 @@
+node_modules
+.env
+test.js
+.wwebjs_cache
+package-lock.json
