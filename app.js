@@ -94,28 +94,45 @@ client.on('message_create', async (msg) => {
           msg.reply(`Badge Telah Terdaftar Dengan Nomor Hp ${sensorNoHp.join("")} Silahkan Menghubungi Admin!`)
           throw {error: 'CLIENT ALREADY EXISTS', no_hp : resultCheckBadge.rows[0].no_hp}
         } else{
-          const resultCheckVoucher = await transaction.query('select * from vouchers where used = false');
-          if (!resultCheckVoucher.rows.length) { // Pengecekkan Ketersedian Voucher WiFi
-            msg.reply("Maaf Vouchernya Habis Kak, Bentar Ya Kak. Mimin Upload Vouchernya Dulu")
-            throw {error: 'VOUCHER NOT AVAILABLE', no_hp : valuesCheckNoHp[0]}
-          } else {
-            // Proses Mencatat Data Karyawan, Voucher Dan Log Vucher Karyawan
-            const insertEmployee = 'insert into employee (id, old_badge, new_badge, fullname, department, company, old_barrack_number, new_barrack_number, no_hp) values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id';
-            const valuesEmployee = [nanoid(8), data.old_badge, data.new_badge, data.fullName, data.department, data.company, data.old_room, data.new_room, valuesCheckNoHp[0]];
-            const resultCheckEmployee = await transaction.query(insertEmployee, valuesEmployee);
-    
-            // Proses Update Data Voucher`Badge Telah Terdaftar Dengan Nomor Hp ${sensorNoHp.join(
-            const updateVoucher = 'update vouchers set used = true where id = $1 returning id';
-            const valuesUpdateVoucher = [resultCheckVoucher.rows[0].id]
-            const resultUpdateVoucher = await transaction.query(updateVoucher, valuesUpdateVoucher)
-    
-            // Proses Mencatat Log Voucher Karyawan
-            const insertEmployeeVoucher= 'insert into employee_voucher (id, employee_id, voucher_id, created_at) values ($1, $2, $3, $4) returning id';
-            const valueEmployeeVoucher = [nanoid(8), resultCheckEmployee.rows[0].id, resultUpdateVoucher.rows[0].id, msg.timestamp]
-            await transaction.query(insertEmployeeVoucher, valueEmployeeVoucher)
-            msg.reply(`Username : ${resultCheckVoucher.rows[0].login_id}\nPassword : ${resultCheckVoucher.rows[0].password}`)
-            await transaction.query('COMMIT')
-            console.info({status : "Sukses Mengirim Pesan", no_hp : msg.from.split('@')[0]});
+          // Pengecekkan Nomor Hp
+          // Menampilkan Akun Yang Dimiliki
+          const checkNoHpAkun = 'select * from employee where no_hp = $1';
+          const valuesCheckNoHpAkun = [msg.from.split('@')[0]];
+          const resultCheckNoHpAkun = await transaction.query(checkNoHpAkun, valuesCheckNoHpAkun)
+      
+          if (resultCheckNoHpAkun.rows.length > 0) {
+            const idEmployeeAkun = resultCheckNoHpAkun.rows[0].id
+            const clientReadySqlAkun =  'select vouchers.login_id, vouchers.password from employee_voucher inner join vouchers on employee_voucher.voucher_id = vouchers.id where employee_voucher.employee_id = $1';
+            const clientReadyValueAkun = [idEmployeeAkun]
+            const clientReadyResultAkun = await transaction.query(clientReadySqlAkun, clientReadyValueAkun)
+            msg.reply(`Username : ${clientReadyResultAkun.rows[0].login_id}\nPassword : ${clientReadyResultAkun.rows[0].password}`)
+            throw {error: 'CLIENT ALREADY EXISTS', no_hp : valuesCheckNoHp[0]}
+          }else{
+            // Pengecekkan Ketersedian Voucher
+            // Menampilkan Notif Jika Voucher Tidak Tersedia
+            const resultCheckVoucher = await transaction.query('select * from vouchers where used = false');
+            if (!resultCheckVoucher.rows.length) { // Pengecekkan Ketersedian Voucher WiFi
+              msg.reply("Maaf Vouchernya Habis Kak, Bentar Ya Kak. Mimin Upload Vouchernya Dulu")
+              throw {error: 'VOUCHER NOT AVAILABLE', no_hp : valuesCheckNoHp[0]}
+            } else {
+              // Proses Mencatat Data Karyawan, Voucher Dan Log Voucher Karyawan
+              const insertEmployee = 'insert into employee (id, old_badge, new_badge, fullname, department, company, old_barrack_number, new_barrack_number, no_hp) values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id';
+              const valuesEmployee = [nanoid(8), data.old_badge, data.new_badge, data.fullName, data.department, data.company, data.old_room, data.new_room, valuesCheckNoHp[0]];
+              const resultCheckEmployee = await transaction.query(insertEmployee, valuesEmployee);
+      
+              // Proses Update Data Voucher`Badge Telah Terdaftar Dengan Nomor Hp ${sensorNoHp.join(
+              const updateVoucher = 'update vouchers set used = true where id = $1 returning id';
+              const valuesUpdateVoucher = [resultCheckVoucher.rows[0].id]
+              const resultUpdateVoucher = await transaction.query(updateVoucher, valuesUpdateVoucher)
+      
+              // Proses Mencatat Log Voucher Karyawan
+              const insertEmployeeVoucher= 'insert into employee_voucher (id, employee_id, voucher_id, created_at) values ($1, $2, $3, $4) returning id';
+              const valueEmployeeVoucher = [nanoid(8), resultCheckEmployee.rows[0].id, resultUpdateVoucher.rows[0].id, msg.timestamp]
+              await transaction.query(insertEmployeeVoucher, valueEmployeeVoucher)
+              msg.reply(`Username : ${resultCheckVoucher.rows[0].login_id}\nPassword : ${resultCheckVoucher.rows[0].password}`)
+              await transaction.query('COMMIT')
+              console.info({status : "Sukses Mengirim Pesan", no_hp : msg.from.split('@')[0]});
+            }
           }
         }
       }
