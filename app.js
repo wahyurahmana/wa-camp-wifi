@@ -91,6 +91,10 @@ client.on('message_create', async (msg) => {
             }
             return e
           })
+          // Notif Ke Admin Jika Ada User Daftar Dengan Badge Yang Telah Terdaftar
+          const num = await client.getNumberId(process.env.NOHPADMIN)
+          await client.sendMessage(num._serialized, `Dari ${msg.from.split('@')[0]} Dapat Pesan Bahwa Badge Telah Terdaftar Dengan Nomor Hp ${resultCheckBadge.rows[0].no_hp}`)
+          // ----
           msg.reply(`Badge Telah Terdaftar Dengan Nomor Hp ${sensorNoHp.join("")} Silahkan Menghubungi Admin!`)
           throw {error: 'CLIENT ALREADY EXISTS', no_hp : resultCheckBadge.rows[0].no_hp}
         } else{
