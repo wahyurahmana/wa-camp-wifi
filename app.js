@@ -22,6 +22,7 @@ client.on('qr', qr => {
 client.on('message_create', async (msg) => {
   const transaction = await pool.connect()
   try {
+    const textReply = `Tolong di isi DENGAN LENGKAP terlebih dahulu:\nNo Badge lama: \nNo Badge baru: \nNama Lengkap: \nDepartemen: \nPerusahaan: \nBARAK dan No. Kamar lama: \nBARAK dan No. Kamar Baru : \n Silahkan Salin Dan Tempel Format Pesan Ini Dan Isi Setelah Tanda Titik Dua`
     if (msg.from.split('@')[0] === process.env.NOHPSERVER) {
       // Pesan Dari No Hp Server WA Tidak Di Proses
       throw {error: 'NO HP SERVER CANNOT MESSAGE CREATE', no_hp : msg.from.split('@')[0]}
@@ -60,7 +61,8 @@ client.on('message_create', async (msg) => {
 
       for (const key in data) {
         if (data[key].trim() === "" && key === "new_badge") {
-          msg.reply("Data New Badge Wajib Diisi.\nSilahkan Copy Paste Ulang Kembali Format Pendaftaran Camp Wifi dan Diisi Setelah Titik Dua (:)")
+          msg.reply("Data Badge Baru Wajib Diisi.\nSilahkan Copy Paste Ulang Kembali Format Pendaftaran Camp Wifi dan Diisi Setelah Titik Dua (:)")
+          msg.reply(textReply)
           throw {error : "new_badge Wajib Diisi", no_hp : msg.from.split('@')[0]}
         }
       }
