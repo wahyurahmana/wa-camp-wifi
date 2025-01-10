@@ -1,10 +1,12 @@
 require('dotenv').config();
-const { Client } = require('whatsapp-web.js');
+const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const {Pool} = require('pg');
 const {nanoid} = require('nanoid')
 
-const client = new Client();
+const client = new Client({
+  authStrategy: new LocalAuth()
+});
 const pool = new Pool();
 
 client.on('ready', async () => {
@@ -59,9 +61,15 @@ client.on('message_create', async (msg) => {
   
       await transaction.query('BEGIN')
 
+      const flag_new_badge = data.new_badge.trim() === "" ? true : false
       for (const key in data) {
-        if (data[key].trim() === "" && key === "new_badge") {
+        if (flag_new_badge && key === "new_badge") {
           msg.reply("Data Badge Baru Wajib Diisi.\nSilahkan Copy Paste Ulang Kembali Format Pendaftaran Camp Wifi dan Diisi Setelah Titik Dua (:)")
+          msg.reply(textReply)
+          throw {error : "new_badge Wajib Diisi", no_hp : msg.from.split('@')[0]}
+        }
+        if ((isNaN(data.new_badge) && key === "new_badge")) {
+          msg.reply("No Badge Baru Wajib Angka. Jika Anda Karyawan Baru, Silahkan Mengisi Data No Badge Baru.\nSilahkan Copy Paste Ulang Kembali Format Pendaftaran Camp Wifi dan Diisi Setelah Titik Dua (:)")
           msg.reply(textReply)
           throw {error : "new_badge Wajib Diisi", no_hp : msg.from.split('@')[0]}
         }
