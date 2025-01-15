@@ -14,6 +14,6 @@
     "nanoid": "^3.3.7",
     "pg": "^8.13.1",
     "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js#webpack-exodus"
+    "whatsapp-web.js": "^1.26.0"
   }
 }
